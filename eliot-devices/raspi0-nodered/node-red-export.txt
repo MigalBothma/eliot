@@ -1,0 +1,196 @@
+[
+    {
+        "id": "f35b25cb.8b8b38",
+        "type": "tab",
+        "label": "Flow 1",
+        "disabled": false,
+        "info": ""
+    },
+    {
+        "id": "ea7b43f7.8e4b3",
+        "type": "tab",
+        "label": "Flow 2",
+        "disabled": false,
+        "info": ""
+    },
+    {
+        "id": "120e00cc.6a0e3f",
+        "type": "mqtt-broker",
+        "z": "",
+        "name": "eliot-web-server",
+        "broker": "35.241.208.46",
+        "port": "1883",
+        "clientid": "",
+        "usetls": false,
+        "compatmode": true,
+        "keepalive": "60",
+        "cleansession": true,
+        "birthTopic": "",
+        "birthQos": "0",
+        "birthPayload": "",
+        "closeTopic": "",
+        "closeQos": "0",
+        "closePayload": "",
+        "willTopic": "",
+        "willQos": "0",
+        "willPayload": ""
+    },
+    {
+        "id": "7bd9075.218d5f8",
+        "type": "rpi-ds18b20",
+        "z": "f35b25cb.8b8b38",
+        "topic": "",
+        "array": false,
+        "name": "rpi-ds18b20",
+        "x": 342.5,
+        "y": 261,
+        "wires": [
+            [
+                "5746d0dd.189fd"
+            ]
+        ]
+    },
+    {
+        "id": "8cbd7245.9609a",
+        "type": "rpi-dht22",
+        "z": "f35b25cb.8b8b38",
+        "name": "rpi-dht11",
+        "topic": "rpi-dht11",
+        "dht": "11",
+        "pintype": "0",
+        "pin": "17",
+        "x": 340.5,
+        "y": 181,
+        "wires": [
+            [
+                "273a6d56.2f5632"
+            ]
+        ]
+    },
+    {
+        "id": "9beecc2d.200f5",
+        "type": "mqtt out",
+        "z": "f35b25cb.8b8b38",
+        "name": "eliot-web-mqtt",
+        "topic": "Migal/Home/Study",
+        "qos": "",
+        "retain": "",
+        "broker": "120e00cc.6a0e3f",
+        "x": 1201.5,
+        "y": 217,
+        "wires": []
+    },
+    {
+        "id": "273a6d56.2f5632",
+        "type": "function",
+        "z": "f35b25cb.8b8b38",
+        "name": "Format DHT Message",
+        "func": "var outmsg = {};\noutmsg[\"payload\"] = {\n    \"DHT-11-Temp\" : parseFloat(msg.payload),\n    \"DHT-11-Humidity\" : parseFloat(msg.humidity),\n    \"DHT-11-isValid\" : msg.isValid,\n    \"DHT-11-errors\" : parseInt(msg.errors)\n}\nreturn outmsg;",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 615.5,
+        "y": 180,
+        "wires": [
+            [
+                "3e962e4b.557312"
+            ]
+        ]
+    },
+    {
+        "id": "5746d0dd.189fd",
+        "type": "function",
+        "z": "f35b25cb.8b8b38",
+        "name": "Format DS18 Message",
+        "func": "var outmsg = {};\noutmsg[\"payload\"] = {\n    \"DS18B20-Temp\" : parseFloat(msg.payload),\n    \"DS18B20-SensorID\" : msg.topic,\n    \"DS18B20-File\" : msg.file,\n    \"DS18B20-Dir\" : msg.dir\n}\nreturn outmsg;",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 624.5,
+        "y": 261,
+        "wires": [
+            [
+                "3e962e4b.557312"
+            ]
+        ]
+    },
+    {
+        "id": "3e962e4b.557312",
+        "type": "join",
+        "z": "f35b25cb.8b8b38",
+        "name": "join msgs",
+        "mode": "custom",
+        "build": "array",
+        "property": "payload",
+        "propertyType": "msg",
+        "key": "topic",
+        "joiner": "\\n",
+        "joinerType": "str",
+        "accumulate": false,
+        "timeout": "",
+        "count": "2",
+        "reduceRight": false,
+        "reduceExp": "",
+        "reduceInit": "",
+        "reduceInitType": "",
+        "reduceFixup": "",
+        "x": 839.5,
+        "y": 217,
+        "wires": [
+            [
+                "13f3711.ae3c18f"
+            ]
+        ]
+    },
+    {
+        "id": "bed05f1.cd85ea",
+        "type": "debug",
+        "z": "f35b25cb.8b8b38",
+        "name": "",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "x": 1171.5,
+        "y": 277,
+        "wires": []
+    },
+    {
+        "id": "13f3711.ae3c18f",
+        "type": "function",
+        "z": "f35b25cb.8b8b38",
+        "name": "merge",
+        "func": "var msgObj = Object.assign({},msg[\"payload\"][0],msg[\"payload\"][1],{\"timestamp\": Date.now()})\n\nvar msgOut = {}\n\nmsgOut[\"payload\"] = msgObj\n\nreturn msgOut;",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 1005.5,
+        "y": 217,
+        "wires": [
+            [
+                "bed05f1.cd85ea",
+                "9beecc2d.200f5"
+            ]
+        ]
+    },
+    {
+        "id": "c8e6016b.b18b4",
+        "type": "inject",
+        "z": "f35b25cb.8b8b38",
+        "name": "",
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "repeat": "60",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "x": 137.5,
+        "y": 219,
+        "wires": [
+            [
+                "8cbd7245.9609a",
+                "7bd9075.218d5f8"
+            ]
+        ]
+    }
+]
